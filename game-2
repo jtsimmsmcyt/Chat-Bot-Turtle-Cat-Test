@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Turtle Cat Infinite RPG</title>
+</head>
+
+<body style="background:#050505; color:#7CFFB2; font-family:monospace;">
+
+<h3>🐢 Turtle Cat Infinite Game</h3>
+
+<div id="chat" style="height:300px; overflow-y:auto; border:1px solid #7CFFB2; padding:5px;"></div>
+
+<input id="input" style="width:70%; padding:5px;">
+<button onclick="send()">Send</button>
+
+<script>
+
+/* =========================
+   🧠 STATE
+========================= */
+
+let turtleName = localStorage.getItem("name") || "Unnamed Turtle";
+let score = parseInt(localStorage.getItem("score") || "0");
+let truth = parseInt(localStorage.getItem("truth") || "0");
+
+let gameMode = false;
+let currentScenario = null;
+let devMode = false;
+
+/* =========================
+   🏆 ENDINGS
+========================= */
+
+const endings = {
+  1: "🐢 Ending 1: You become the turtle. The loop continues forever.",
+  2: "😼 Ending 2: The cat replaces reality.",
+  3: "🌀 Ending 3: You escape… but wake up inside the game.",
+  10: "✨ TRUE ENDING: You were always the system."
+};
+
+/* =========================
+   🎮 SCENARIOS
+========================= */
+
+const common = [
+  {
+    text: "🐢 A glowing turtle egg appears in your hands.",
+    options: ["Keep it", "Throw it", "Talk to it", "Break it"],
+    correct: 1
+  },
+  {
+    text: "😼 A cat blocks your path.",
+    options: ["Pet it", "Run", "Stare", "Bow"],
+    correct: 1
+  },
+  {
+    text: "🌀 Reality is unstable.",
+    options: ["Accept it", "Fight it", "Ignore it", "Reset it"],
+    correct: 1
+  }
+];
+
+const rare = [
+  {
+    text: "✨ A glowing door whispers your name.",
+    options: ["Enter", "Ignore", "Destroy", "Wait"],
+    correct: 1
+  }
+];
+
+const glitch = [
+  {
+    text: "🌀 ERROR: reality breaking.",
+    options: ["Stabilize", "Break more", "Observe", "Disconnect"],
+    correct: 2
+  },
+  {
+    text: "😼 The cat is writing your next thought.",
+    options: ["Stop it", "Watch", "Help it", "Become it"],
+    correct: 4
+  }
+];
+
+/* =========================
+   🧰 HELPERS
+========================= */
+
+function save() {
+  localStorage.setItem("name", turtleName);
+  localStorage.setItem("score", score);
+  localStorage.setItem("truth", truth);
+}
+
+function add(msg) {
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.textContent = msg;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function chaos() {
+  const lines = [
+    "🌀 reality stutters...",
+    "🐢 the turtle remembers you...",
+    "😼 the cat is watching...",
+    "✨ something changes..."
+  ];
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
+/* =========================
+   🎮 SCENARIO GENERATOR
+========================= */
+
+function getScenario() {
+  const r = Math.random();
+
+  if (truth > 8 || r < 0.1) return glitch[Math.floor(Math.random() * glitch.length)];
+  if (r < 0.3) return rare[Math.floor(Math.random() * rare.length)];
+  return common[Math.floor(Math.random() * common.length)];
+}
+
+/* =========================
+   🎮 FORMAT SCENARIO
+========================= */
+
+function format(s) {
+  let msg = s.text + "\n";
+  s.options.forEach((o, i) => {
+    msg += (i + 1) + ": " + o + "\n";
+  });
+  return msg;
+}
+
+/* =========================
+   🔐 DEV MODE
+========================= */
+
+function toggleDev(state) {
+  devMode = state;
+  add("🐢 DEV MODE: " + (devMode ? "ON 🔓" : "OFF"));
+}
+
+/* =========================
+   🎮 GAME START
+========================= */
+
+function startGame() {
+  gameMode = true;
+  currentScenario = getScenario();
+  return format(currentScenario);
+}
+
+/* =========================
+   🧠 MAIN BRAIN
+========================= */
+
+function reply(text) {
+  const t = text.toLowerCase().trim();
+
+  /* 🎮 START GAME */
+  if (t === "/whatwouldyoudo") {
+    return startGame();
+  }
+
+  /* 🔢 GAME INPUT */
+  if (gameMode && currentScenario) {
+    const choice = parseInt(t);
+
+    if (choice === currentScenario.correct) {
+      score++;
+      truth++;
+      save();
+      add("⭐ correct! score: " + score);
+    } else {
+      add("❌ wrong...");
+    }
+
+    if (Math.random() < 0.15) add(chaos());
+
+    currentScenario = getScenario();
+    return format(currentScenario);
+  }
+
+  /* 🏁 ENDINGS */
+  if (t.startsWith("/ending")) {
+    const n = t.split(" ")[1];
+    return endings[n] || "🐢 ending lost in the loop...";
+  }
+
+  /* 🔐 DEV MODE */
+  if (t === "/dev") {
+    toggleDev(true);
+    return "🐢 DEV MODE ACTIVATED";
+  }
+
+  /* 🐱 NAME SYSTEM */
+  if (t.includes("can i call you")) {
+    let name = text.split("can i call you")[1]?.trim();
+    if (name) turtleName = name;
+    save();
+    return "🐢 that’s a purrfect name!";
+  }
+
+  if (t === "reset name") {
+    turtleName = "Unnamed Turtle";
+    save();
+    return "🐢 name reset!";
+  }
+
+  /* 👋 GREETING */
+  if (t.includes("hi") || t.includes("hello")) {
+    if (Math.random() < 0.3) return chaos();
+    return "🐢 hi " + turtleName;
+  }
+
+  /* 🌀 RANDOM GLITCH */
+  if (Math.random() < 0.08) return chaos();
+
+  /* 💬 FALLBACK */
+  const lines = [
+    "🐢 the loop continues...",
+    "🌀 reality shifts...",
+    "😼 the cat remembers you...",
+    "✨ try /whatwouldyoudo"
+  ];
+
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
+/* =========================
+   📤 SEND
+========================= */
+
+function send() {
+  const input = document.getElementById("input");
+  const text = input.value;
+  input.value = "";
+
+  add("YOU: " + text);
+  add(reply(text));
+}
+
+</script>
+
+</body>
+</html>
