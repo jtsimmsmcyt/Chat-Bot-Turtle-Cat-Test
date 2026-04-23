@@ -1,41 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Turtle Cat Chatbot</title>
+</head>
+
+<body style="margin:0; background:#050505;">
+
+<div id="topbar" style="
+  font-family: monospace;
+  background:#0a0a0a;
+  color:#7CFFB2;
+  padding:8px;
+  border:2px solid #7CFFB2;
+">
+  TURTLE CAT 🐢🐱 NAME: <span id="nameDisplay"></span> |
+  ⚠️ <span id="warnDisplay">0</span>
+</div>
+
 <div id="chat" style="
   font-family: monospace;
-  background: #0a0a0a;
-  color: #7CFFB2;
-  padding: 10px;
-  height: 320px;
-  overflow-y: auto;
-  border: 2px solid #7CFFB2;
-">
-  <div>TURTLE CAT 🐢🐱: hiiii it's me!! talk to me!!</div>
-</div>
+  background:#050505;
+  color:#7CFFB2;
+  padding:10px;
+  height:300px;
+  overflow-y:auto;
+  border:2px solid #7CFFB2;
+"></div>
 
 <div style="margin-top:5px;">
   <input id="input" placeholder="Talk to turtle cat..." style="
-    width: 75%;
-    background: black;
-    color: #7CFFB2;
-    border: 1px solid #7CFFB2;
-    padding: 8px;
-    font-family: monospace;
-    outline: none;
+    width:75%;
+    background:black;
+    color:#7CFFB2;
+    border:1px solid #7CFFB2;
+    padding:8px;
+    font-family:monospace;
   ">
   <button onclick="send()" style="
-    width: 20%;
-    background: #7CFFB2;
-    border: none;
-    padding: 8px;
-    cursor: pointer;
+    width:20%;
+    background:#7CFFB2;
+    border:none;
+    padding:8px;
   ">Send</button>
 </div>
 
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("input");
+const nameDisplay = document.getElementById("nameDisplay");
+const warnDisplay = document.getElementById("warnDisplay");
 
-// memory
-let lastUserMessage = "";
+// 🧠 memory
+let turtleName = localStorage.getItem("turtle_name") || "Unnamed Turtle";
+let warnings = parseInt(localStorage.getItem("turtle_warn") || "0");
+let mutedUntil = 0;
 
+nameDisplay.textContent = turtleName;
+warnDisplay.textContent = warnings;
+
+// 🌐 ONLINE BAD WORD LIST
+let badWords = [];
+
+fetch("https://raw.githubusercontent.com/coffee-and-fun/google-profanity-words/main/data/en.txt")
+  .then(res => res.text())
+  .then(text => {
+    badWords = text.split("\n").map(w => w.trim()).filter(Boolean);
+    console.log("Bad words loaded:", badWords.length);
+  });
+
+// 💾 save
+function saveAll() {
+  localStorage.setItem("turtle_name", turtleName);
+  localStorage.setItem("turtle_warn", warnings);
+  nameDisplay.textContent = turtleName;
+  warnDisplay.textContent = warnings;
+}
+
+// 💬 add message
 function add(text) {
   const div = document.createElement("div");
   div.textContent = text;
@@ -43,169 +85,95 @@ function add(text) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-function turtleCatAI(text) {
-  text = text.toLowerCase();
+// 🚫 STRONG FILTER
+function containsBadWord(text) {
+  if (!badWords.length) return false; // prevents early false triggers
 
-  // memory
-  lastUserMessage = text;
+  const clean = text.toLowerCase().replace(/[^a-z ]/g, " ");
+  const words = clean.split(" ").filter(Boolean);
 
-  // smart-ish responses
-  if (text.includes("hello") || text.includes("hi"))
-    return "TURTLE CAT 🐢🐱: HIIII!! i was waiting for you!!";
-
-  if (text.includes("how are you"))
-    return "TURTLE CAT 🐢🐱: i'm zooming around happily!! how about you??";
-
-  if (text.includes("sad"))
-    return "TURTLE CAT 🐢🐱: nooo :( come here *tiny turtle hug* 🐢";
-
-  if (text.includes("happy"))
-    return "TURTLE CAT 🐢🐱: YAYYY!! i'm happy too now!!";
-
-  if (text.includes("game"))
-    return "TURTLE CAT 🐢🐱: let's play!! type 'spin' 😄";
-
-  if (text.includes("spin"))
-    return "TURTLE CAT 🐢🐱: *spins in a circle at max speed*";
-
-  if (text.includes("food"))
-    return "TURTLE CAT 🐢🐱: snacks??? SHARE???";
-
-if (text.includes("stupid"))
-    return "TURTLE CAT 🐢🐱: That’s not nice :(";
-
-if (text.includes("ugly"))
-    return "TURTLE CAT 🐢🐱: What did i do? :(";
-
-  if (text.includes("bye"))
-    return "TURTLE CAT 🐢🐱: NOOO don't go 😭 come back soon!!";
-
-  // fallback "feels like AI"
-  const randomReplies = [
-    "TURTLE CAT 🐢🐱: hmm... tell me more!!",
-    "TURTLE CAT 🐢🐱: that's interesting 👀",
-    "TURTLE CAT 🐢🐱: wait really??",
-    "TURTLE CAT 🐢🐱: i’m thinking about that...",
-    "TURTLE CAT 🐢🐱: you always say cool stuff 😄",
-    "TURTLE CAT 🐢🐱: can we zoom now??"
-  ];
-
-  return randomReplies[Math.floor(Math.random() * randomReplies.length)];
+  return badWords.some(b => words.includes(b));
 }
 
-function send() {
-  const text = input.value.trim();
-  if (!text) return;
+// ⚠️ punishment
+function handleWarning() {
+  warnings++;
+  saveAll();
 
-  add("YOU: " + text);
-  input.value = "";
-
-  setTimeout(() => {
-    add(turtleCatAI(text));
-  }, 300);
+  if (warnings === 1) return "TURTLE CAT 🐢🐱: warning 1 ⚠️";
+  if (warnings === 2) return "TURTLE CAT 🐢🐱: warning 2 ⚠️";
+  if (warnings >= 3) {
+    mutedUntil = Date.now() + 10000;
+    return "TURTLE CAT 🐢🐱: MUTED 🔇 (10 sec)";
+  }
 }
 
-// enter key
-input.addEventListener("keypress", function(e) {
-  if (e.key === "Enter") send();
-});
-</script>
-<div id="chat" style="
-  font-family: monospace;
-  background: #050505;
-  color: #7CFFB2;
-  padding: 10px;
-  height: 340px;
-  overflow-y: auto;
-  border: 2px solid #7CFFB2;
-">
-</div>
-
-<div style="margin-top:5px;">
-  <input id="input" placeholder="Talk to turtle cat..." style="
-    width: 75%;
-    background: black;
-    color: #7CFFB2;
-    border: 1px solid #7CFFB2;
-    padding: 8px;
-    font-family: monospace;
-    outline: none;
-  ">
-  <button onclick="send()" style="
-    width: 20%;
-    background: #7CFFB2;
-    border: none;
-    padding: 8px;
-    cursor: pointer;
-  ">Send</button>
-</div>
-
-<script>
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-
-// 🧠 load memory from browser
-let userName = localStorage.getItem("turtle_name") || "Player";
-let mood = localStorage.getItem("turtle_mood") || "happy";
-let xp = parseInt(localStorage.getItem("turtle_xp") || "0");
-
-// start message
-add(`TURTLE CAT 🐢🐱: welcome back ${userName}! (I remembered you 😼)`);
-
-function save() {
-  localStorage.setItem("turtle_name", userName);
-  localStorage.setItem("turtle_mood", mood);
-  localStorage.setItem("turtle_xp", xp);
-}
-
-function add(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
+// 🧠 MAIN LOGIC
 function reply(text) {
-  const t = text.toLowerCase();
+  const t = text.toLowerCase().trim();
 
-  // set name
-  if (t.startsWith("my name is")) {
-    userName = text.split("is")[1].trim();
-    save();
-    return `TURTLE CAT 🐢🐱: I will remember you, ${userName}!`;
+  // 🔇 mute
+  if (Date.now() < mutedUntil) {
+    return "TURTLE CAT 🐢🐱: ... (muted)";
   }
 
-  // greetings
-  if (t.includes("hello") || t.includes("hi")) {
-    return `TURTLE CAT 🐢🐱: hiiii ${userName}!! I remember you 😄`;
+  // 🚫 BAD WORDS FIRST (CRITICAL)
+  if (containsBadWord(text)) {
+    return handleWarning();
   }
 
-  // mood system
-  if (t.includes("love")) {
-    mood = "happy";
-    xp += 2;
-    save();
-    return `TURTLE CAT 🐢🐱: I love you too, ${userName} 💚`;
+  // 🔄 reset name
+  if (t === "reset name") {
+    turtleName = "Unnamed Turtle";
+    warnings = 0;
+    saveAll();
+    return "TURTLE CAT 🐢🐱: name reset!!";
   }
 
-  if (t.includes("sad")) {
-    mood = "sad";
-    save();
-    return "TURTLE CAT 🐢🐱: aww no 😿 I'm here for you";
+  // 🐱 name reaction
+  if (t === turtleName.toLowerCase()) {
+    return "TURTLE CAT 🐢🐱: what?";
+  }
+
+  // 🐱 name change
+  if (t.includes("can i call you")) {
+    let newName = text
+      .toLowerCase()
+      .split("can i call you")[1]
+      .replace(/[?.]/g, "")
+      .trim();
+
+    if (!newName) return "TURTLE CAT 🐢🐱: I didn’t catch the name!";
+
+    if (containsBadWord(newName)) {
+      return handleWarning();
+    }
+
+    turtleName = newName;
+    saveAll();
+
+    return "TURTLE CAT 🐢🐱: that’s a purrfect name! 🐱✨";
+  }
+
+  // 👋 greetings
+  const words = t.split(" ");
+  if (words.includes("hi") || words.includes("hello")) {
+    return `TURTLE CAT 🐢🐱 (${turtleName}): hiiii!!`;
   }
 
   if (t.includes("how are you")) {
-    return mood === "sad"
-      ? "TURTLE CAT 🐢🐱: still a little sad... but better because you're here"
-      : "TURTLE CAT 🐢🐱: I'm doing great! memory still working 🧠✨";
+    return `TURTLE CAT 🐢🐱 (${turtleName}): I'm doing great!!`;
   }
 
-  // default
-  xp += 1;
-  save();
-  return "TURTLE CAT 🐢🐱: tell me more 👀";
+  if (t.includes("love")) {
+    return `TURTLE CAT 🐢🐱 (${turtleName}): I love you too 💚`;
+  }
+
+  // 💬 fallback (ONLY if nothing matched)
+  return `TURTLE CAT 🐢🐱 (${turtleName}): tell me more 👀`;
 }
 
+// send
 function send() {
   const text = input.value.trim();
   if (!text) return;
@@ -213,8 +181,9 @@ function send() {
   add("YOU: " + text);
   input.value = "";
 
-  setTimeout(() => {
-    add(reply(text));
-  }, 300);
+  add(reply(text));
 }
 </script>
+
+</body>
+</html>
