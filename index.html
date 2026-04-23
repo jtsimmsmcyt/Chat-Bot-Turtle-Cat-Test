@@ -1,0 +1,112 @@
+<div id="chat" style="
+  font-family: monospace;
+  background: #0a0a0a;
+  color: #7CFFB2;
+  padding: 10px;
+  height: 320px;
+  overflow-y: auto;
+  border: 2px solid #7CFFB2;
+">
+  <div>TURTLE CAT 🐢🐱: hiiii it's me!! talk to me!!</div>
+</div>
+
+<div style="margin-top:5px;">
+  <input id="input" placeholder="Talk to turtle cat..." style="
+    width: 75%;
+    background: black;
+    color: #7CFFB2;
+    border: 1px solid #7CFFB2;
+    padding: 8px;
+    font-family: monospace;
+    outline: none;
+  ">
+  <button onclick="send()" style="
+    width: 20%;
+    background: #7CFFB2;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+  ">Send</button>
+</div>
+
+<script>
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+
+// memory
+let lastUserMessage = "";
+
+function add(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function turtleCatAI(text) {
+  text = text.toLowerCase();
+
+  // memory
+  lastUserMessage = text;
+
+  // smart-ish responses
+  if (text.includes("hello") || text.includes("hi"))
+    return "TURTLE CAT 🐢🐱: HIIII!! i was waiting for you!!";
+
+  if (text.includes("how are you"))
+    return "TURTLE CAT 🐢🐱: i'm zooming around happily!! how about you??";
+
+  if (text.includes("sad"))
+    return "TURTLE CAT 🐢🐱: nooo :( come here *tiny turtle hug* 🐢";
+
+  if (text.includes("happy"))
+    return "TURTLE CAT 🐢🐱: YAYYY!! i'm happy too now!!";
+
+  if (text.includes("game"))
+    return "TURTLE CAT 🐢🐱: let's play!! type 'spin' 😄";
+
+  if (text.includes("spin"))
+    return "TURTLE CAT 🐢🐱: *spins in a circle at max speed*";
+
+  if (text.includes("food"))
+    return "TURTLE CAT 🐢🐱: snacks??? SHARE???";
+
+if (text.includes("stupid"))
+    return "TURTLE CAT 🐢🐱: That’s not nice :(";
+
+if (text.includes("ugly"))
+    return "TURTLE CAT 🐢🐱: What did i do? :(";
+
+  if (text.includes("bye"))
+    return "TURTLE CAT 🐢🐱: NOOO don't go 😭 come back soon!!";
+
+  // fallback "feels like AI"
+  const randomReplies = [
+    "TURTLE CAT 🐢🐱: hmm... tell me more!!",
+    "TURTLE CAT 🐢🐱: that's interesting 👀",
+    "TURTLE CAT 🐢🐱: wait really??",
+    "TURTLE CAT 🐢🐱: i’m thinking about that...",
+    "TURTLE CAT 🐢🐱: you always say cool stuff 😄",
+    "TURTLE CAT 🐢🐱: can we zoom now??"
+  ];
+
+  return randomReplies[Math.floor(Math.random() * randomReplies.length)];
+}
+
+function send() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  add("YOU: " + text);
+  input.value = "";
+
+  setTimeout(() => {
+    add(turtleCatAI(text));
+  }, 300);
+}
+
+// enter key
+input.addEventListener("keypress", function(e) {
+  if (e.key === "Enter") send();
+});
+</script>
